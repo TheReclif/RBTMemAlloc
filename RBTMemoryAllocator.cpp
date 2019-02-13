@@ -560,7 +560,7 @@ inline bool RBTMemoryAllocator::isBlockFitting(FreeHeader * block, const SizeTyp
 	const SizeType startingSpace = space;
 	FittingBlockData& result = outputData;
 
-	const SizeType requiredSize = ((reqSize % mostRestrictiveAlignment) == 0) ? reqSize : reqSize + (mostRestrictiveAlignment - (reqSize % mostRestrictiveAlignment));
+	const SizeType requiredSize = ((reqSize % usedAlignment) == 0) ? reqSize : reqSize + (usedAlignment - (reqSize % usedAlignment));
 
 	// We don't check if it's possible to attach any remaining memory to existing block. Also we don't check if it's possible to create new free block out of remaining memory.
 	// That's because remaining memory, assuming we're unable to allocate new free blocks out of it, is attached to already existing claimed blocks.
@@ -611,15 +611,15 @@ RBTMemoryAllocator::FreeHeader * RBTMemoryAllocator::findFittingBlock(const Size
 			searchNode = chosenBlock = searchNode->left;
 		}
 		else
-			if (isBlockFitting(searchNode->right, size, alignment, isFittingData))
-			{
-				chosenData = isFittingData;
-				searchNode = chosenBlock = searchNode->right;
-			}
-			else
-			{
-				searchNode = searchNode->right;
-			}
+		if (isBlockFitting(searchNode->right, size, alignment, isFittingData))
+		{
+			chosenData = isFittingData;
+			searchNode = chosenBlock = searchNode->right;
+		}
+		else
+		{
+			searchNode = searchNode->right;
+		}
 	}
 
 	return chosenBlock;
@@ -775,7 +775,7 @@ bool RBTMemoryAllocator::dbgCheckListIntegrity() const
 }
 
 RBTMemoryAllocator::RBTMemoryAllocator(_In_ const SizeType memorySize)
-	: RBTMemoryAllocator(operator new(memorySize + mostRestrictiveAlignment), memorySize + mostRestrictiveAlignment, true)
+	: RBTMemoryAllocator(operator new(memorySize + usedAlignment), memorySize + usedAlignment, true)
 {
 }
 
@@ -784,7 +784,7 @@ RBTMemoryAllocator::RBTMemoryAllocator(_In_ void* memoryToUse, _In_ const SizeTy
 {
 	SizeType tempSize = memorySize;
 	void* temp = memoryToUse;
-	if (std::align(mostRestrictiveAlignment, memorySize - mostRestrictiveAlignment, temp, tempSize))
+	if (std::align(usedAlignment, memorySize - usedAlignment, temp, tempSize))
 	{
 		freeMemory = new (temp) FreeHeader;
 		freeMemory->left = nullptr;
@@ -805,7 +805,7 @@ RBTMemoryAllocator::~RBTMemoryAllocator()
 {
 	if (allocations > 0)
 	{
-		throw std::runtime_error("Memory leak detected.");
+		std::exit(1);
 	}
 
 	if (isOwningMemory)
