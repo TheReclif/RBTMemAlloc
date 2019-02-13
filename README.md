@@ -27,7 +27,7 @@ Also, the allocator contains a static instance of the allocator. It also consume
 ### Providing your own memory
 RBTMemAlloc allows you to provide your own memory to the allocator. Keep in mind it won't deallocate this memory.
 ```cpp
-char myBuffer[RBTMemoryAllocator::KiloByte * 8]
+char myBuffer[RBTMemoryAllocator::KiloByte * 8];
 RBTMemoryAllocator allocator(myBuffer, sizeof(myBuffer));
 ```
 ### Using STL
