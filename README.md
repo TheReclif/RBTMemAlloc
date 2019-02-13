@@ -1,5 +1,5 @@
 # RBTMemAlloc
-Simple red black tree based memory allocator using C++11 and above.
+Simple red black tree based memory allocator using C++11.
 ## Getting Started
 ### Setup
 Just copy RBTMemoryAllocator.h and RBTMemoryAllocator.cpp onto your computer and add them to your project.
