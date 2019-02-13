@@ -7,6 +7,10 @@
 #include <cstddef>
 #include <iostream>
 #include <string>
+#include <set>
+#include <queue>
+#include <stack>
+#include <list>
 
 #ifndef _In_
 #define _In_
@@ -15,14 +19,14 @@
 #define _In_opt_
 #endif
 
-// Some basic definitions.
-constexpr unsigned long long KiloByte = (1024);
-constexpr unsigned long long MegaByte = (1024 * KiloByte);
-constexpr auto mostRestrictiveAlignment = alignof(std::max_align_t) >= 4 ? alignof(std::max_align_t) : 4;
-
 class RBTMemoryAllocator
 {
 public:
+	// Some basic definitions.
+	static constexpr unsigned long long KiloByte = (1024);
+	static constexpr unsigned long long MegaByte = (1024 * KiloByte);
+	static constexpr auto usedAlignment = alignof(std::max_align_t) >= 4 ? alignof(std::max_align_t) : 4;
+
 	using SizeType = std::size_t;
 private:
 	template<class T>
@@ -31,15 +35,15 @@ private:
 	struct FreeHeader;
 	struct ClaimedHeader;
 
-	struct alignas(mostRestrictiveAlignment) ClaimedHeader
+	struct alignas(usedAlignment) ClaimedHeader
 	{
 		ClaimedHeader* prev, *next;
 	};
-	struct alignas(mostRestrictiveAlignment) FreeHeader
+	struct alignas(usedAlignment) FreeHeader
 		: public ClaimedHeader
 	{
 		FreeHeader* left = nullptr, *right = nullptr, *parent = nullptr; // RB data. Red/black bit is stored in the least significant bit of parent.
-		// These addresses should be perfectly aligned to mostRestrictiveAlignment, so at least 2 least significant bits can be used to store data. In our case: most right tells us if the block is free or claimed and the one on the left is a red black bit.
+		// These addresses should be perfectly aligned to usedAlignment, so at least 2 least significant bits can be used to store data. In our case: most right tells us if the block is free or claimed and the one on the left is a red black bit.
 	};
 	struct FittingBlockData
 	{
@@ -49,8 +53,8 @@ private:
 		SizeType usedMemory = 0;
 	};
 
-	static_assert(alignof(FreeHeader) == mostRestrictiveAlignment, "Alignments must match.");
-	static_assert(alignof(ClaimedHeader) == mostRestrictiveAlignment, "Alignments must match.");
+	static_assert(alignof(FreeHeader) == usedAlignment, "Alignments must match.");
+	static_assert(alignof(ClaimedHeader) == usedAlignment, "Alignments must match.");
 	static_assert(sizeof(ClaimedHeader) < sizeof(FreeHeader), "It should not happen.");
 private:
 	void* memory;
@@ -115,7 +119,7 @@ public:
 	RBTMemoryAllocator(_In_ void* memoryToUse, _In_ const SizeType memorySize, _In_opt_ const bool isOwning = false); // Ignore the third parameter.
 	~RBTMemoryAllocator();
 
-	void* allocate(_In_ const SizeType howMany, _In_opt_ const SizeType alignment = mostRestrictiveAlignment);
+	void* allocate(_In_ const SizeType howMany, _In_opt_ const SizeType alignment = usedAlignment);
 	void deallocate(_In_ void* ptr);
 
 	SizeType getUsedMemory() const;
@@ -195,5 +199,32 @@ inline bool StdAllocator<T>::operator!=(const StdAllocator &) const
 
 template<class T>
 using Vector = std::vector<T, StdAllocator<T>>;
+
+template<class T>
+using List = std::list<T, StdAllocator<T>>;
+
+template<class T>
+using Deque = std::deque<T, StdAllocator<T>>;
+
+template<class Key, class Value, class Compare = std::template less<Key>>
+using Map = std::map<Key, Value, Compare, StdAllocator<std::template pair<Key, Value>>>;
+
+template<class Key, class Value, class Compare = std::template less<Key>>
+using Multimap = std::multimap<Key, Value, Compare, StdAllocator<std::template pair<Key, Value>>>;
+
+template<class Value, class Compare = std::template less<Value>>
+using Set = std::set<Value, Compare, StdAllocator<Value>>;
+
+template<class Value, class Compare = std::less<Value>>
+using Multiset = std::multiset<Value, Compare, StdAllocator<Value>>;
+
+template<class T>
+using Queue = std::queue<T, Deque<T>>;
+
+template<class T, class Comp = std::less<T>, class Container = Vector<T>>
+using PriorityQueue = std::priority_queue<T, Container, Comp>;
+
+template<class T>
+using Stack = std::stack<T, Deque<T>>;
 
 using String = std::basic_string<char, std::char_traits<char>, StdAllocator<char>>;
