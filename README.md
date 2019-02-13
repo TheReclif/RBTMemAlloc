@@ -12,6 +12,8 @@ Now you are ready to go. Just use the ```allocate``` and ```deallocate``` method
 ```cpp
 char* myString = allocator.allocate(512);
 allocator.deallocate(myString);
+BigClass* itsVeryBig = allocator.allocate<BigClass>("SomeGarbage", 42); // Calls the appropriate constructor.
+allocator.deallocate(itsVeryBig); // Calls the BigClass' destructor.
 ```
 If you want to apply a specific alignment to the allocated memory, just pass it as a second argument of ```allocate```.
 ```cpp
