@@ -1,4 +1,6 @@
 #include "RBTMemoryAllocator.h"
+#include <iostream>
+#include <memory>
 
 using std::swap;
 
