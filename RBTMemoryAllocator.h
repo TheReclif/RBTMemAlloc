@@ -122,6 +122,11 @@ public:
 	void* allocate(_In_ const SizeType howMany, _In_opt_ const SizeType alignment = usedAlignment);
 	void deallocate(_In_ void* ptr);
 
+	template<class T, class... Args>
+	T* allocate(Args&&... args);
+	template<class T>
+	void deallocate(T* const arg);
+
 	SizeType getUsedMemory() const;
 	SizeType getTotalMemory() const;
 
@@ -228,3 +233,19 @@ template<class T>
 using Stack = std::stack<T, Deque<T>>;
 
 using String = std::basic_string<char, std::char_traits<char>, StdAllocator<char>>;
+
+template<class T, class ...Args>
+inline T * RBTMemoryAllocator::allocate(Args && ...args)
+{
+	return new (allocate(sizeof(T), alignof(T))) T(std::forward<Args...>(args...));
+}
+
+template<class T>
+inline void RBTMemoryAllocator::deallocate(T * const arg)
+{
+	if (arg)
+	{
+		arg->~T();
+		deallocate((void*)arg);
+	}
+}
